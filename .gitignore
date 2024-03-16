@@ -9,6 +9,7 @@ obj
 *.user
 *.sln.docstates
 *.bak
+.mono/
 
 # NuGet packages
 *.nuget.props

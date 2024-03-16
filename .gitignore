@@ -1,0 +1,71 @@
+# Binaries
+bin
+obj
+
+# Visual Studio files
+.vs/
+*.vscode/
+*.suo
+*.user
+*.sln.docstates
+*.bak
+
+# NuGet packages
+*.nuget.props
+*.paket.props
+*.paket.targets
+paket-files/
+*.lock.json
+*.nupkg
+packages/
+project.lock.json
+project.assets.json
+
+# Build results
+[Tt]est[Rr]esult*/
+[Bb]uild/
+
+# Resharper
+_ReSharper*/
+
+# Rider
+.idea/
+*.sln.iml
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.user
+*.suo
+*.sln.docstates
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+*.suo
+*.user
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

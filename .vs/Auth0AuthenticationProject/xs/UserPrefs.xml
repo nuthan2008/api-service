@@ -1,0 +1,7 @@
+﻿<Properties StartupConfiguration="{0CAB0354-4249-4F12-A31E-400A6F7A4DAD}|https">
+  <MonoDevelop.Ide.ItemProperties.api.service PreferredExecutionTarget="/Applications/Google Chrome.app" />
+  <MultiItemStartupConfigurations />
+  <DisabledProjects>
+    <String>docker-compose1/docker-compose1.csproj</String>
+  </DisabledProjects>
+</Properties>

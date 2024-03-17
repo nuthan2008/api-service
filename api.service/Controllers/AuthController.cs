@@ -1,15 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using SampleDotNetCoreApiProject.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using APIService.Models;
 
-namespace SampleDotNetCoreApiProject.Models
+namespace APIService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

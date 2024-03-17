@@ -1,4 +1,4 @@
-namespace SampleDotNetCoreApiProject.Models
+namespace APIService.Models
 {
     public class Auth0TokenResponse
     {

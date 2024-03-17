@@ -1,9 +1,8 @@
-using System;
+using APIService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SampleDotNetCoreApiProject.Models;
 
-namespace SampleDotNetCoreApiProject.Controllers
+namespace APIService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -1,9 +1,6 @@
 namespace BusinessProvider.Models.DataSvc
 {
-    public interface IPractice
+    public interface IPractice : IBasePractice
     {
-        string Id { get; set; }
-        string BusinessName { get; set; }
-        int IncorporationYear { get; set; }
     }
 }

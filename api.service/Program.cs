@@ -1,5 +1,6 @@
-
+using BusinessProvider.Domain.Services;
 using BusinessProvider.providers;
+using BusinessProvider.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
@@ -38,7 +39,9 @@ builder.Services.AddHttpClient();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IBusinessLogicProvider, BusinessLogicProvider>();
+builder.Services.AddTransient<IBusinessLogicProvider, BusinessLogicProvider>();
+builder.Services.AddAbstractFactory<IDataService, DataService>();
+
 
 var app = builder.Build();
 

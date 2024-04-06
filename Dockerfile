@@ -11,6 +11,8 @@ WORKDIR /src
 # Copy the .csproj files and restore dependencies
 COPY ["api.service/api.service.csproj","api.service/"]
 COPY ["BusinessProvider/BusinessProvider.csproj", "BusinessProvider/"]
+COPY ["DataProvider/DataProvider.csproj", "DataProvider/"]
+COPY ["Domain/Domain.csproj", "Domain/"]
 RUN dotnet restore "api.service/api.service.csproj"
 # Copy the entire solution and build
 COPY . .

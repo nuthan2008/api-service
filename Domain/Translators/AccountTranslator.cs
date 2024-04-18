@@ -23,6 +23,11 @@ namespace Domain.Translators
         {
             return _mapper.Map<AccountResponse>(account);
         }
+
+        public IEnumerable<AccountResponse> ToResponse(IEnumerable<Account> accounts)
+        {
+            return _mapper.Map<IEnumerable<AccountResponse>>(accounts);
+        }
     }
 }
 

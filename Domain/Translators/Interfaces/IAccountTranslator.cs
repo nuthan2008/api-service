@@ -8,5 +8,6 @@ namespace Domain.Translators.Interfaces
     {
         Account ToDomain(AccountRequest request);
         AccountResponse ToResponse(Account account);
+        IEnumerable<AccountResponse> ToResponse(IEnumerable<Account> accounts);
     }
 }

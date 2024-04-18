@@ -8,21 +8,27 @@ namespace SampleDotNetCoreApiProject.Controllers.ExpenseMaster
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController: BaseController
+    public class AccountController : BaseController
     {
         private readonly IAccountTranslator _accountTranslator;
-        
-        public AccountController(IAccountTranslator accountTranslator, IUnitOfWork unitOfWork): base(unitOfWork)
+
+        public AccountController(IAccountTranslator accountTranslator, IUnitOfWork unitOfWork) : base(unitOfWork)
         {
             _accountTranslator = accountTranslator;
         }
 
         // GET: api/products
-        // [HttpGet]
-        // public ActionResult<IEnumerable<Account>> Get()
-        // {
-           // return _dbContext.Account.ToList();
-       // }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<AccountResponse>>> Get()
+        {
+            var account = await _unitOfWork.Account.All();
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(_accountTranslator.ToResponse(account));
+        }
 
         // GET: api/products/5
         [HttpGet("{id:guid}")]
@@ -42,7 +48,7 @@ namespace SampleDotNetCoreApiProject.Controllers.ExpenseMaster
         public async Task<ActionResult<bool>> Post([FromBody] AccountRequest account)
         {
             var result = await _unitOfWork.Account.Add(_accountTranslator.ToDomain(account));
-            if(result)
+            if (result)
             {
                 await _unitOfWork.CompleteAsync();
             }

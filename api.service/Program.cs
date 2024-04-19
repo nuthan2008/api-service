@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Security.Claims;
+using APIService.Authorization;
 using APIService.Extensions;
 using BusinessProvider.Domain.Services;
 using BusinessProvider.providers;
@@ -8,7 +10,9 @@ using DataProvider.Repositories;
 using Domain.Translators;
 using Domain.Translators.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
@@ -44,7 +48,13 @@ builder.Services
     {
         options.Authority = auth0Settings["Auth0:Domain"];
         options.Audience = auth0Settings["Auth0:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = ClaimTypes.NameIdentifier
+        };
     });
+
+builder.Services.AddTransient<HttpRequestHeaderMiddleware>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
@@ -58,11 +68,14 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IAccountTranslator, AccountTranslator>();
+builder.Services.AddSingleton<IAuth0UserManager, Auth0UserManager>();
 
 ConfigureLogging();
+
 builder.Host.UseSerilog();
 builder.Services.AddSingleton(Log.Logger);
 builder.Services.AddElasticSearch(builder.Configuration);
+// builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -74,8 +87,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+
+// app.UseMiddleware<HttpRequestHeaderMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseHttpsRedirection();
 //Add support to logging request with SERILOG
 app.UseSerilogRequestLogging();
@@ -110,10 +127,15 @@ void ConfigureLogging()
 
 ElasticsearchSinkOptions ConfigureElasticSink(IConfigurationRoot configuration, string environment)
 {
-    return new ElasticsearchSinkOptions(new Uri(configuration["ElasticConfiguration:Uri"]))
+    var url = "http://localhost:9200";//configuration["ElasticConfiguration:Uri"] ?? "http://localhost:9200";
+    var uri = new Uri(url);
+    var assemblyName = Assembly.GetExecutingAssembly().GetName().Name.IsNullOrEmpty() ?
+    Assembly.GetExecutingAssembly().GetName().Name?.ToLower().Replace(".", "-") :
+    "Random Assembly Name";
+    return new ElasticsearchSinkOptions(uri)
     {
         AutoRegisterTemplate = true,
-        IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name.ToLower().Replace(".", "-")}-{environment.ToLower()}-{DateTime.UtcNow:yyyy-MM}",
+        IndexFormat = $"{assemblyName}-{environment.ToLower()}-{DateTime.UtcNow:yyyy-MM}",
         NumberOfReplicas = 1,
         NumberOfShards = 2
     };

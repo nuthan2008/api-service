@@ -2,6 +2,7 @@ using BusinessProvider.Domain.Services;
 using BusinessProvider.Models.DataSvc;
 using BusinessProvider.providers;
 using BusinessProvider.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Serilog;
@@ -53,6 +54,7 @@ public class BusinessController : ControllerBase
 
 
     [HttpGet(Name = "GetPractices")]
+    [Authorize]
     public async Task<IActionResult> Get(string keyword)
     {
         _logger.LogInformation("Testing");

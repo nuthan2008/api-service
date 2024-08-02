@@ -3,6 +3,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using APIService.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Web;
 
 namespace APIService.Authorization;
 
@@ -22,18 +25,59 @@ public class Auth0UserManager : IAuth0UserManager
         auth0Settings = configuration.GetSection("Auth0");
     }
 
-    public async Task CreateUserAsync(UserInfo userInfo)
+    private async Task<string> GetAccessToken()
+    {
+        using (var client = _httpClientFactory.CreateClient())
+        {
+            // var requestBody1 = new StringContent(
+            //     $"{{\"client_id\":\"{clientId}\",\"client_secret\":\"{clientSecret}\",\"audience\":\"https://{domain}/api/v2/\",\"grant_type\":\"client_credentials\"}}",
+            //     Encoding.UTF8,
+            //     "application/json");
+
+            var requestBody = new
+            {
+                grant_type = "client_credentials",
+                audience = auth0Settings["Audience"],
+                client_id = auth0Settings["ClientId"],
+                client_secret = auth0Settings["ClientSecret"]
+            };
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            var response = client.PostAsync($"https://{auth0Settings["Domain"]}/oauth/token", content).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                // var tokenResponse = await response.Content.ReadAsStringAsync().Result;
+                // dynamic tokenObject = JsonSerializer.DeserializeAsync(tokenResponse);
+                var responseData = await JsonSerializer.DeserializeAsync<Auth0TokenResponse>(await response.Content.ReadAsStreamAsync());
+                return responseData?.access_token;
+            }
+            else
+            {
+                throw new Exception("Failed to retrieve access token.");
+            }
+        }
+    }
+
+    public async Task<HttpResponseMessage> CreateUserAsync(UserInfo userInfo)
     {
         var auth0Settings = _configuration.GetSection("Auth0");
 
         using (var client = _httpClientFactory.CreateClient())
         {
-            var auth0Url = $"https://{auth0Settings["Domain"]}/oauth/users";
-            var content = new StringContent(JsonSerializer.Serialize(userInfo), Encoding.UTF8, "application/json");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken());
+            var auth0Url = $"{auth0Settings["Audience"]}users";
 
-            var response = await client.PostAsync(auth0Url, content);
+            userInfo.AppMetadata.SysCreatedDate = DateTime.UtcNow;
+            userInfo.AppMetadata.SysModDate = DateTime.UtcNow;
+            userInfo.NickName = $"{userInfo.FirstName} {userInfo.LastName}";
+            var jsonOptions = new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            var content = new StringContent(JsonSerializer.Serialize(userInfo, jsonOptions), Encoding.UTF8, "application/json");
 
-            response.EnsureSuccessStatusCode();
+            return await client.PostAsync(auth0Url, content);
         }
     }
 
@@ -73,6 +117,9 @@ public class Auth0UserManager : IAuth0UserManager
 public class UserInfo
 {
     // Define user properties here
+    [JsonPropertyName("user_id")]
+    public string Id { get; set; } = string.Empty;
+
     [Required]
     [JsonPropertyName("email")]
     public string Email { get; set; } = string.Empty;
@@ -80,19 +127,79 @@ public class UserInfo
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    [JsonPropertyName("given_name")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [JsonPropertyName("family_name")]
+    public string LastName { get; set; } = string.Empty;
+
     [JsonPropertyName("nickname")]
     public string NickName { get; set; } = string.Empty;
 
     [JsonPropertyName("email_verified")]
     public bool isEmailVerified { get; set; }
 
-    [JsonPropertyName("created_at")]
-    public DateTime CreatedOn { get; set; }
+    [JsonPropertyName("password")]
+    public string Password { get; set; } = string.Empty;
+
+    [JsonPropertyName("connection")]
+    public string Connection { get; set; } = "Username-Password-Authentication";
+
+    [JsonPropertyName("user_metadata")]
+    public required UserMetadata UserMetadata { get; set; }
+
+    [JsonPropertyName("app_metadata")]
+    public required AppMetadata AppMetadata { get; set; }
+}
+
+public class UserMetadata
+{
+    [JsonPropertyName("contact")]
+    public string Contact { get; set; } = string.Empty;
+
+    [JsonPropertyName("publicName")]
+    public string PublicName { get; set; } = string.Empty;
+
+    [JsonPropertyName("plan")]
+    public string plan { get; set; } = string.Empty;
+}
+
+public class AppMetadata
+{
+    [JsonPropertyName("roles")]
+    public string Roles { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("userGroup")]
+    public string UserGroup { get; set; } = string.Empty;
+
+    [JsonPropertyName("sysDomainType")]
+    public string SysDomainType { get; set; } = string.Empty;
+
+    [JsonPropertyName("sysTenant")]
+    public string SysTenant { get; set; } = string.Empty;
+
+    [JsonPropertyName("sysCreatedBy")]
+    public string SysCreatedBy { get; set; } = string.Empty;
+
+    [JsonPropertyName("sysCreatedDate")]
+    public DateTime SysCreatedDate { get; set; }
+
+    [JsonPropertyName("sysModBy")]
+    public string SysModBy { get; set; } = string.Empty;
+
+    [JsonPropertyName("sysModDate")]
+    public DateTime SysModDate { get; set; }
+
+    [JsonPropertyName("sysLocale")]
+    public string SysLocale { get; set; } = string.Empty;
 }
 
 public interface IAuth0UserManager
 {
-    Task CreateUserAsync(UserInfo userInfo);
+    Task<HttpResponseMessage> CreateUserAsync(UserInfo userInfo);
 
     Task<UserInfo> GetUserAsync(string userId, string token);
 }

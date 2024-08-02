@@ -16,20 +16,21 @@ public class BusinessController : ControllerBase
 {
     private readonly IBusinessLogicProvider _businessProvider;
     private readonly IAbstractFactory<IDataService> _abstractFactory;
+    private readonly IDataService _dataService;
     readonly ILogger<BusinessController> _logger;
 
-    private readonly IElasticClient _elasticClient;
+    // private readonly IElasticClient _elasticClient;
 
     public BusinessController(
         IBusinessLogicProvider businessProvider,
         IAbstractFactory<IDataService> abstractFactory,
         ILogger<BusinessController> logger,
-        IElasticClient elasticClient)
+        IDataService dataService)
     {
         _businessProvider = businessProvider;
         _abstractFactory = abstractFactory;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _elasticClient = elasticClient;
+        _dataService = dataService;
     }
 
     [HttpPost]
@@ -47,32 +48,32 @@ public class BusinessController : ControllerBase
     public async Task<IActionResult> getFormattedData1(string id, CancellationToken cancellationToken)
     {
 
-        var response = await _businessProvider.getDataById(id, cancellationToken);
+        var response = await _dataService.GetDataById("", id);
 
         return Ok(response);
     }
 
 
-    [HttpGet(Name = "GetPractices")]
-    [Authorize]
-    public async Task<IActionResult> Get(string keyword)
-    {
-        _logger.LogInformation("Testing");
+    // [HttpGet(Name = "GetPractices")]
+    // [Authorize]
+    // public async Task<IActionResult> Get(string keyword)
+    // {
+    //     _logger.LogInformation("Testing");
 
-        var result = await _elasticClient.SearchAsync<Practice>(
-            s => s.Query(
-                q => q.QueryString(
-                    d => d.Query('*' + keyword + '*')
-                )
-            ).Size(100)
-        );
-        return Ok(result.Documents.ToList());
-    }
+    //     var result = await _elasticClient.SearchAsync<Practice>(
+    //         s => s.Query(
+    //             q => q.QueryString(
+    //                 d => d.Query('*' + keyword + '*')
+    //             )
+    //         ).Size(100)
+    //     );
+    //     return Ok(result.Documents.ToList());
+    // }
 
-    [HttpPost(Name = "AddPractice")]
-    public async Task<IActionResult> Post(Practice practice)
-    {
-        await _elasticClient.IndexDocumentAsync(practice);
-        return Ok();
-    }
+    // [HttpPost(Name = "AddPractice")]
+    // public async Task<IActionResult> Post(Practice practice)
+    // {
+    //     await _elasticClient.IndexDocumentAsync(practice);
+    //     return Ok();
+    // }
 }

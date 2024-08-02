@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Security.Claims;
 using APIService.Authorization;
 using APIService.Extensions;
+using APIService.Filters.ActionFilter;
+using APIService.Handlers;
 using BusinessProvider.Domain.Services;
 using BusinessProvider.providers;
 using BusinessProvider.Services;
@@ -56,7 +58,14 @@ builder.Services
 
 builder.Services.AddTransient<HttpRequestHeaderMiddleware>();
 
-builder.Services.AddControllers();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add(typeof(ApiResponseWrapperFilterAttribute));
+    });
+
 builder.Services.AddHttpClient();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -69,6 +78,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IAccountTranslator, AccountTranslator>();
 builder.Services.AddSingleton<IAuth0UserManager, Auth0UserManager>();
+builder.Services.AddScoped(typeof(IElasticSearchService<>), typeof(ElasticSearchService<>));
 
 ConfigureLogging();
 
@@ -86,6 +96,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler(opt => { });
 app.UseRouting();
 
 // app.UseMiddleware<HttpRequestHeaderMiddleware>();

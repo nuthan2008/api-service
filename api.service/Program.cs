@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
+using Nest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,11 +62,11 @@ builder.Services.AddTransient<HttpRequestHeaderMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddControllers(options =>
-    {
-        options.Filters.Add(typeof(ApiResponseWrapperFilterAttribute));
-    });
-
+// builder.Services.AddControllers(options =>
+//     {
+//         options.Filters.Add(typeof(ApiResponseWrapperFilterAttribute));
+//     });
+builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -78,6 +79,23 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IAccountTranslator, AccountTranslator>();
 builder.Services.AddSingleton<IAuth0UserManager, Auth0UserManager>();
+
+
+// Configure ElasticSearchSettings
+var elasticsearchUri = builder.Configuration.GetSection("ElasticConfiguration:Uri").Value;
+var elasticsearchDefaultIndex = builder.Configuration.GetSection("ElasticConfiguration:index").Value;
+if (string.IsNullOrEmpty(elasticsearchUri))
+{
+    throw new ArgumentNullException("Uri", "Elasticsearch Uri cannot be null or empty.");
+}
+
+// Create and configure the ConnectionSettings
+var settings = new ConnectionSettings(new Uri(elasticsearchUri))
+    .DefaultIndex(elasticsearchDefaultIndex);
+
+// Register the IElasticClient with the settings
+var client = new ElasticClient(settings);
+builder.Services.AddSingleton<IElasticClient>(client);
 builder.Services.AddScoped(typeof(IElasticSearchService<>), typeof(ElasticSearchService<>));
 
 ConfigureLogging();

@@ -1,5 +1,7 @@
 using BusinessProvider.Domain.Services;
+using BusinessProvider.Mapping;
 using Nest;
+using Newtonsoft.Json.Linq;
 
 namespace BusinessProvider.Services;
 
@@ -20,6 +22,42 @@ public class ElasticSearchService<T> : IElasticSearchService<T> where T : class
         return this;
     }
 
+    // Method to ensure the index exists and update mappings if necessary
+    public async Task<string> EnsureIndexExistsAsync(string indexName)
+    {
+        var indexExistsResponse = _client.Indices.Exists(indexName);
+        string result = string.Empty;
+        if (!indexExistsResponse.Exists)
+        {
+            var createIndexResponse = await _client.Indices.CreateAsync(indexName, c => c
+                .Map<T>(m => m.AutoMap())
+            );
+
+            if (!createIndexResponse.IsValid)
+            {
+                throw new Exception($"Failed to create index: {createIndexResponse.ServerError.Error.Reason}");
+            }
+
+            result = "Index created";
+        }
+        else
+        {
+            var putMappingResponse = await _client.MapAsync<T>(m => m
+                .Index(indexName)
+                .AutoMap()
+            );
+
+            if (!putMappingResponse.IsValid)
+            {
+                throw new Exception($"Failed to update mapping: {putMappingResponse.ServerError.Error.Reason}");
+            }
+
+            result = "Index mapping updated";
+        }
+
+        return result;
+    }
+
     public async Task<BulkResponse> AddOrUpdateBulk(IEnumerable<T> documents)
     {
         var indexResponse = await _client.BulkAsync(b => b
@@ -29,10 +67,10 @@ public class ElasticSearchService<T> : IElasticSearchService<T> where T : class
         return indexResponse;
     }
 
-    public async Task<T> AddOrUpdate(T document)
+    public async Task<T> AddOrUpdate(T document, CancellationToken cancellationToken)
     {
         var indexResponse =
-            await _client.IndexAsync(document, idx => idx.Index(IndexName));
+            await _client.IndexAsync(document, idx => idx.Index(IndexName), cancellationToken);
         if (!indexResponse.IsValid)
         {
             throw new Exception(indexResponse.DebugInformation);
@@ -50,9 +88,9 @@ public class ElasticSearchService<T> : IElasticSearchService<T> where T : class
         return resp;
     }
 
-    public async Task<GetResponse<T>> Get(string key)
+    public async Task<GetResponse<T>> Get(string key, CancellationToken cancellationToken)
     {
-        return await _client.GetAsync<T>(key, g => g.Index(IndexName));
+        return await _client.GetAsync<T>(key, g => g.Index("datasvc"), cancellationToken);
     }
 
     public async Task<List<T>?> GetAll()

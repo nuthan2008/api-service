@@ -1,10 +1,6 @@
-﻿using System;
-using BusinessProvider.Domain.Services;
-using BusinessProvider.providers;
-using BusinessProvider.Services;
+﻿using BusinessProvider.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
-using Nest;
-using ElasticsearchCRUD;
+using BusinessProvider.Models;
 
 
 namespace SampleDotNetCoreApiProject.Controllers.elasticsearchservice
@@ -13,29 +9,48 @@ namespace SampleDotNetCoreApiProject.Controllers.elasticsearchservice
     [Route("api/[controller]")]
     public class ElasticSearchController : ControllerBase
     {
-        // private readonly IElasticSearchIndexProvider _elasticSearchIndexProvider;
+        private readonly IDataService _dataService;
 
-        public ElasticSearchController() // IElasticSearchIndexProvider elasticSearchIndexProvider)
+        public ElasticSearchController(IDataService dataService)
         {
-            // _elasticSearchIndexProvider = elasticSearchIndexProvider;
+            _dataService = dataService;
+        }
+
+        [HttpGet]
+        [Route("get/{id}")]
+        public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
+        {
+            var response = await _dataService.GetDataById("", id, cancellationToken);
+            if (response.Found)
+            {
+                return Ok(response.Source);
+            }
+            else
+            {
+                return NotFound(); // or throw an exception, depending on your requirements
+            }
         }
 
         [HttpPost]
-        [Route("createIndex")]
-        public async Task<IActionResult> createIndex(string indexName, CancellationToken cancellationToken)
+        [Route("create")]
+        public async Task<IActionResult> Create([FromBody] DataRequest dataRequest, CancellationToken cancellationToken)
         {
-            var connectionSettings = new ConnectionSettings(new Uri("http://localhost:9200"))
-                .EnableApiVersioningHeader();
-            var client = new ElasticClient(connectionSettings);
-            var elasticsearch = new ElasticSearch(client, indexName);
-            await elasticsearch.CreateIndexIfNotExists(indexName);
-            var document = new { id = 1, name = "Name 001" };
-            var response = await elasticsearch.AddOrUpdate(document);
+            if (dataRequest == null)
+            {
+                return BadRequest("Invalid data request");
+            }
 
-            // var response =await _elasticSearchIndexProvider.GetDocument(cancellationToken);
+            var response = await _dataService.AddOrUpdate(dataRequest, cancellationToken);
+            return Ok(response);
+        }
+
+        [HttpPost]
+        [Route("createOrUpdateIndex")]
+        public async Task<IActionResult> CreateOrUpdateIndex(string indexName)
+        {
+            var response = await _dataService.CreateOrUpdateIndex(indexName);
 
             return Ok(response);
         }
     }
 }
-

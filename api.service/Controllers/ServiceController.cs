@@ -17,7 +17,7 @@ namespace APIService.Controllers
         }
 
         [HttpGet("{type}/GetById")]
-        public async Task<IActionResult> Get(string type, string id)
+        public async Task<IActionResult> Get(string type, string id, CancellationToken cancellationToken)
         {
             var serviceInstance = _abstractFactory.Create();
             if (serviceInstance == null)
@@ -27,7 +27,7 @@ namespace APIService.Controllers
 
 
 
-            var result = await serviceInstance.GetDataById(type, id);
+            var result = await serviceInstance.GetDataById(type, id, cancellationToken);
             return Ok(result);
         }
 

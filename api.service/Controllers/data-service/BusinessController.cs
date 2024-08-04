@@ -48,7 +48,7 @@ public class BusinessController : ControllerBase
     public async Task<IActionResult> getFormattedData1(string id, CancellationToken cancellationToken)
     {
 
-        var response = await _dataService.GetDataById("", id);
+        var response = await _dataService.GetDataById("", id, cancellationToken);
 
         return Ok(response);
     }

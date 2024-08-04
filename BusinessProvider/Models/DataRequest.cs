@@ -1,21 +1,26 @@
 
+using Nest;
+
 namespace BusinessProvider.Models
 {
-    public class DataRequest : IDataRequest
+    public class DataRequest //: IDataRequest
     {
-        public Guid? requestId { get; set; }
+        // public Guid? requestId { get; set; }
 
-        public RequestParam? Params { get; set; }
+        // public RequestParam? Params { get; set; }
 
+        [Keyword(Name = "id")]
         public string Id { get; set; }
 
-        public string BusinessName { get; set; }
+        [Text(Name = "name")]
+        public string Name { get; set; }
 
+        [Keyword(Name = "type")]
         public string Type { get; set; }
 
-        public int IncorporationYear { get; set; }
+        // public int IncorporationYear { get; set; }
 
-        public SysData SysData { get; set; }
+        // public SysData SysData { get; set; }
 
     }
 }

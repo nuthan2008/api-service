@@ -1,0 +1,34 @@
+{
+    "indexName": "expenseappdata",
+    "mapping": {
+        "mappings": {
+            "properties": {
+                "id": {
+                    "type": "keyword"
+                },
+                "accountName": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "description": {
+                    "type": "text"
+                },
+                "accountType": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "isActive": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

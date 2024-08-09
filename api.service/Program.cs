@@ -73,6 +73,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IBusinessLogicProvider, BusinessLogicProvider>();
 builder.Services.AddAbstractFactory<IDataService, DataService>();
+builder.Services.AddAbstractFactory<IAccountService, AccountService>();
 builder.Services.AddScoped<AppDbContext>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

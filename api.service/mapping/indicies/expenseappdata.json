@@ -1,0 +1,46 @@
+{
+    "indexName": "expenseappdata",
+    "mapping": {
+        "mappings": {
+            "dynamic": false,
+            "properties": {
+                "id": {
+                    "type": "keyword"
+                },
+                "type": {
+                    "type": "keyword"
+                },
+                "sysData": {
+                    "properties": {
+                        "sysTenant": {
+                            "type": "keyword"
+                        },
+                        "sysLocale": {
+                            "type": "keyword"
+                        },
+                        "sysDomainType": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword"
+                                }
+                            }
+                        },
+                        "sysCreatedBy": {
+                            "type": "keyword"
+                        },
+                        "sysCreatedDate": {
+                            "type": "date"
+                        },
+                        "sysModBy": {
+                            "type": "keyword"
+                        },
+                        "sysModDate": {
+                            "type": "date"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

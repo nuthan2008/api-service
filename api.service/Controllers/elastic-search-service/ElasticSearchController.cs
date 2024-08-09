@@ -52,5 +52,14 @@ namespace SampleDotNetCoreApiProject.Controllers.elasticsearchservice
 
             return Ok(response);
         }
+
+        [HttpGet]
+        [Route("retrieveMapping")]
+        public async Task<IActionResult> RetrieveMapping()
+        {
+            var response = await _dataService.RetrieveMappingAsync();
+
+            return Ok(response);
+        }
     }
 }

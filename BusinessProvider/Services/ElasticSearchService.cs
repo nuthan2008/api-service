@@ -1,7 +1,9 @@
+using System.Text.Json;
 using BusinessProvider.Domain.Services;
-using BusinessProvider.Mapping;
+using BusinessProvider.Models.ElasticSearch;
 using Nest;
-using Newtonsoft.Json.Linq;
+using Elasticsearch.Net;
+using BusinessProvider.Utility;
 
 namespace BusinessProvider.Services;
 
@@ -20,42 +22,6 @@ public class ElasticSearchService<T> : IElasticSearchService<T> where T : class
     {
         IndexName = indexName;
         return this;
-    }
-
-    // Method to ensure the index exists and update mappings if necessary
-    public async Task<string> EnsureIndexExistsAsync(string indexName)
-    {
-        var indexExistsResponse = _client.Indices.Exists(indexName);
-        string result = string.Empty;
-        if (!indexExistsResponse.Exists)
-        {
-            var createIndexResponse = await _client.Indices.CreateAsync(indexName, c => c
-                .Map<T>(m => m.AutoMap())
-            );
-
-            if (!createIndexResponse.IsValid)
-            {
-                throw new Exception($"Failed to create index: {createIndexResponse.ServerError.Error.Reason}");
-            }
-
-            result = "Index created";
-        }
-        else
-        {
-            var putMappingResponse = await _client.MapAsync<T>(m => m
-                .Index(indexName)
-                .AutoMap()
-            );
-
-            if (!putMappingResponse.IsValid)
-            {
-                throw new Exception($"Failed to update mapping: {putMappingResponse.ServerError.Error.Reason}");
-            }
-
-            result = "Index mapping updated";
-        }
-
-        return result;
     }
 
     public async Task<BulkResponse> AddOrUpdateBulk(IEnumerable<T> documents)
@@ -115,5 +81,90 @@ public class ElasticSearchService<T> : IElasticSearchService<T> where T : class
     {
         var response = await _client.DeleteByQueryAsync(queryReq);
         return response;
+    }
+
+    public async Task<string> CreateOrUpdateIndex()
+    {
+        var folderPath = "./mapping/"; // Specify your folder path
+        var fileService = new FileService();
+        var mappingFiles = await fileService.ReadAllJsonFilesAsync(folderPath);
+
+        foreach (var json in mappingFiles)
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var mappingFile = JsonSerializer.Deserialize<MappingFile>(json, options);
+
+            if (mappingFile == null || string.IsNullOrEmpty(mappingFile.IndexName))
+            {
+                return "Invalid mapping file.";
+            }
+
+            var indexName = mappingFile.IndexName;
+
+            var indexExists = _client.Indices.Exists(indexName).Exists;
+
+            if (indexExists)
+            {
+                var mappingResponse = await UpdateMappingAsync(mappingFile.Mapping, indexName);
+                return mappingResponse;
+            }
+            else
+            {
+                var response = _client.Indices.Create(indexName, c => c
+                    .InitializeUsing(new IndexState())
+                    .Map(m => m.AutoMap()));
+
+                if (response.IsValid)
+                {
+                    var mappingResponse = await UpdateMappingAsync(mappingFile.Mapping, indexName);
+                    return mappingResponse;
+                }
+                else
+                {
+                    return $"Failed to create index: {response.ServerError}";
+                }
+            }
+        }
+
+        return "No mapping files found.";
+    }
+
+    public async Task<JsonElement> RetrieveMappingAsync()
+    {
+        // Use the low-level client to get the raw JSON mapping
+        var mappingResponse = await _client.LowLevel.Indices.GetMappingAsync<StringResponse>(IndexName);
+
+        if (mappingResponse.Success)
+        {
+            // Parse the raw JSON string into a JsonElement to preserve the structure
+            var rawMappingJson = mappingResponse.Body;
+            return JsonSerializer.Deserialize<JsonElement>(rawMappingJson);
+
+            //return fieldMappings;
+        }
+        else
+        {
+            throw new Exception($"Failed to retrieve mapping for index '{IndexName}': {mappingResponse.Body}");
+        }
+    }
+
+    private async Task<string> UpdateMappingAsync(object fieldMapping, string indexName)
+    {
+        // Extract the actual mapping part from the "mappings" key
+        var mapping = ((JsonElement)fieldMapping).GetProperty("mappings").GetRawText();
+
+        var response = await _client.LowLevel.Indices.PutMappingAsync<StringResponse>(indexName, mapping);
+
+        if (response.Success)
+        {
+            return $"Updated mapping for index: {indexName}";
+        }
+        else
+        {
+            return $"Failed to update mapping: {response.Body}";
+        }
     }
 }

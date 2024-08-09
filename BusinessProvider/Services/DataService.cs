@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Text.Json;
 using BusinessProvider.Domain.Services;
 using BusinessProvider.Models;
 using Nest;
@@ -22,12 +22,29 @@ namespace BusinessProvider.Services
 
         public async Task<DataRequest> AddOrUpdate(DataRequest request, CancellationToken cancellationToken)
         {
+
+            request.SysData = request.SysData ?? new SysData
+            {
+                sysTenant = "datasvc",
+                sysLocale = "en_US",
+                sysCreatedBy = "System",
+                sysCreatedDate = DateTime.UtcNow,
+                sysModBy = "System",
+                sysModDate = DateTime.UtcNow
+            };
             return await _esService.AddOrUpdate(request, cancellationToken);
         }
 
         public async Task<string> CreateOrUpdateIndex(string indexName)
         {
-            return await _esService.EnsureIndexExistsAsync(indexName);
+            return await _esService.CreateOrUpdateIndex();
+        }
+
+        public async Task<JsonElement> RetrieveMappingAsync()
+        {
+            var mappings = await _esService.RetrieveMappingAsync();
+
+            return mappings;
         }
     }
 }

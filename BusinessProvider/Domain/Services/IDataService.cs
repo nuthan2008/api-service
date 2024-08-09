@@ -1,4 +1,5 @@
-﻿using BusinessProvider.Models;
+﻿using System.Text.Json;
+using BusinessProvider.Models;
 using Nest;
 namespace BusinessProvider.Domain.Services
 {
@@ -9,5 +10,7 @@ namespace BusinessProvider.Domain.Services
         Task<DataRequest> AddOrUpdate(DataRequest request, CancellationToken cancellationToken);
 
         Task<string> CreateOrUpdateIndex(string indexName);
+
+        Task<JsonElement> RetrieveMappingAsync();
     }
 }

@@ -1,4 +1,5 @@
 ﻿
+using System.Text.Json;
 using Nest;
 
 namespace BusinessProvider.Domain.Services;
@@ -6,7 +7,9 @@ public interface IElasticSearchService<T> where T : class
 {
     IElasticSearchService<T> Index(string indexName);
 
-    Task<string> EnsureIndexExistsAsync(string indexName);
+    Task<string> CreateOrUpdateIndex();
+
+    Task<JsonElement> RetrieveMappingAsync();
 
     Task<BulkResponse> AddOrUpdateBulk(IEnumerable<T> documents);
     Task<T> AddOrUpdate(T document, CancellationToken cancellationToken);

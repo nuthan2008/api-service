@@ -18,9 +18,7 @@ namespace BusinessProvider.Models
         [Keyword(Name = "type")]
         public string Type { get; set; }
 
-        // public int IncorporationYear { get; set; }
-
-        // public SysData SysData { get; set; }
-
+        [Nested(Name = "sysData")]
+        public SysData? SysData { get; set; }
     }
 }
